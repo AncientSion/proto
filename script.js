@@ -14,6 +14,8 @@ const classes = {
 			this.parentid = parentid
 			this.id = id;
 
+			this.destroyed = 0;
+			this.remHP = hp;
 			this.damages = [];
 			this.element;
 
@@ -51,15 +53,18 @@ const classes = {
 	Fleet: class Fleet {
 		constructor(id){
 			this.id = id;
+			this.userid = 1;
+			this.friendly = 1;
 			this.samples = [];
 			this.units = [];
 			this.pos;
 			this.htmlElement;
 			this.idindex = 0;
-			this.x = 0;
-			this.y = 0;
+			this.loc = {x: 0, y: 0};
+			this.attack = {x: 0, y: 0};
 
 			this.createElement();
+			this.createHoverElement();
 		}
 
 		doSelect(){
@@ -72,16 +77,28 @@ const classes = {
 			}
 			else {
 				game.mode = 1;
-				game.activeFleet = 0;
+				game.activeFleet = false;
 				this.htmlElement.find(".btn").html("select").removeClass("activeFleet");
 			}
 		}
 
-		doPlace(x, y){
-			this.x = x;
-			this.y = y;
+		changeUserId(){
+			this.userid = this.userid == 1 ? this.userid = 2 : this.userid = 1;
+			this.friendly = this.userid == game.userid ? 1 : 0;
+			this.htmlElement.find(".userid").html(this.userid);
+		}
+
+		doPlace(pos){
+			this.loc = pos;
 			this.doSelect();
+			this.updateHoverDiv();
 			game.updateCanvas();
+		}
+
+		setAttack(pos){
+			this.attack = pos;
+			game.updateCanvas();
+			this.doSelect();
 		}
 
 		getUnitId(){
@@ -89,20 +106,113 @@ const classes = {
 			return this.idindex;
 		}
 
+		createHoverElement(){
+			this.fleetHoverDiv = $("<div>")
+				.addClass("fleetHoverDiv fleet" + this.id + " hidden")
+				.append($("<div>")
+					.append($("<table>")))
+			$(document.body).append(this.fleetHoverDiv);
+
+			this.updateHoverDiv();
+		}
+
+		updateHoverDiv(){
+			let table = $(this.fleetHoverDiv).find("table").empty()
+				.append($("<thead>").append($("<td>").attr("colSpan", 4).html("Fleet #" + this.id)));
+
+			if (!this.units.length){return;}
+
+			let unitNumbers = [];	
+
+			for (let i = 0; i < game.samples.length; i++){
+				unitNumbers.push(0);
+
+				for (let j = 0; j < this.units.length; j++){
+					if (game.samples[i].name != this.units[j].name){continue;}
+				
+					unitNumbers[i]++;
+				}
+
+				if (unitNumbers[i]){
+					table.append($("<tr>")
+							.append($("<td>").html(unitNumbers[i]))
+							.append($("<td>").attr("colSpan", 3).html(game.samples[i].name)))
+				}
+			}
+
+			table
+				.append($("<tr>").css("height", 20).append($("<td>").attr("colSpan", 4)))
+				.append($("<tr>")
+					.append($("<td>").html("HP"))
+					.append($("<td>").html("PD"))
+					.append($("<td>").html("SA"))
+					.append($("<td>").html("HA")))
+				.append($("<tr>")
+					.append($("<td>").html(this.getStat("hp")))
+					.append($("<td>").html(this.getStat("pd")))
+					.append($("<td>").html(this.getStat("soft")))
+					.append($("<td>").html(this.getStat("hard"))))
+
+		}
+
+		getCombinedStats(){
+			let hp = this.getStat("hp");
+			let pd = this.getStat("pd");			
+			let soft = this.getStat("soft");
+			let hard = this.getStat("hard");
+
+			return (hp + " / " + pd + " / " + soft + " / " + hard);
+		}
+
+		getStat(stat){
+			let amount = 0;
+
+			for (let i = 0; i < this.units.length; i++){
+				amount += this.units[i][stat];
+			}
+			return amount;
+		}
+
+		toggleHoverElement(){
+			$(this.fleetHoverDiv).toggleClass("hidden");
+		}
+
+		fireAt(target){
+
+			for (let i = 0; i < this.units.length; i++){
+				let subTarget = target.units[Math.floor(Math.random()*target.units.length)];
+
+				subTarget.damages.push(this.units[i].soft);
+				subTarget.remHP -= this.units[i].soft
+
+				console.log("fleet #" + this.id + ", shooter: " + this.units[i].name + " #" + i + " doing " + this.units[i].soft + " damage"); 
+
+				if (subTarget.remHP <= 0){
+					subTarget.destroyed = 1;
+				}
+			}
+		}
+
 		createElement(){
 
-			var buttonHtml = (this.x != 0 && this.y != 0 ? "select" : "confirm")
+			var buttonHtml = (this.loc.x != 0 && this.loc.y != 0 ? "select" : "confirm")
 
 			let classTable = $("<table>")
 			let thead = $("<thead>")
 			.append($("<tr>")
-				.append($("<td>").attr("colSpan", 9).html("Fleet #" + this.id))
+				.append($("<td>").attr("colSpan", 7).html("Fleet #" + this.id))
+				.append($("<td>").attr("colSpan", 2)
+					.html(this.userid)
+					.addClass("userid")
+					.click(function(){
+						game.getUnit($(this).closest(".fleetDiv").data("fleetid")).changeUserId();
+					}))
 				.append($("<td>").attr("colSpan", 2)
 					.append($("<div>")
 						.addClass("btn")
 						.html(buttonHtml)
 						.click(function(){
-							selectFleet($(this).closest(".fleetDiv").data("fleetid"))
+							game.getUnit($(this).closest(".fleetDiv").data("fleetid")).doSelect();
 						}))));
 
 
@@ -178,6 +288,7 @@ const classes = {
 			this.htmlElement.find(".fleetLayout").append(subunit.element);
 
 			this.updateTable(name);
+			if (this.loc.x || this.loc.y){this.updateHoverDiv();}
 		}
 
 		removeUnit(name){
@@ -290,10 +401,40 @@ const game = {
 	fleets: [],
 	idindex: 0,
 	mode: 1,
+	mouseTicker: 0,
+	userid: 1,
+
 	getUnit: function(id){
 		for (let i = 0; i < this.fleets.length; i++){
 			if (this.fleets[i].id == id){return this.fleets[i];}
 		}
+	},
+	fieldIsEmpty: function(pos){
+		for (let i = 0; i < this.fleets.length; i++){
+			if (this.fleets[i].loc.x == pos.x && this.fleets[i].loc.y == pos.y){
+				return false;
+			}
+		}
+		return true;
+	},
+	hasEnemyUnitOnField(pos){
+		for (let i = 0; i < this.fleets.length; i++){
+			if (this.fleets[i].loc.x == pos.x && this.fleets[i].loc.y == pos.y){
+				if (!this.fleets[i].friendly){
+					return true;
+				}
+			}
+		}
+		return false;
+	},
+	getAllUnitsByCoords(pos){
+		let units = [];
+		for (let i = 0; i < this.fleets.length; i++){
+			if (this.fleets[i].loc.x == pos.x && this.fleets[i].loc.y == pos.y){
+				units.push(this.fleets[i]);
+			}
+		}
+		return units;
 	},
 	getFleetId: function(){
 		this.idindex++;
@@ -302,19 +443,90 @@ const game = {
 	updateCanvas: function(){
 		this.units.clearRect(0, 0, this.width, this.height);
 
+		this.drawAttacks();
+		this.drawUnits();
+	},
+	drawAttacks: function(){
 		for (let i = 0; i < this.fleets.length; i++){
-			if (this.fleets[i].x == 0 || this.fleets[i].y == 0){continue;}
+			if (this.fleets[i].loc.x == 0 || this.fleets[i].loc.y == 0){continue;}
+			if (this.fleets[i].attack.x == 0){continue;}
+
+			let originX = this.fleets[i].loc.x * this.fieldSize - this.fieldSize/2;
+			let originY = this.fleets[i].loc.y * this.fieldSize - this.fieldSize/2;
+			let targetX = this.fleets[i].attack.x * this.fieldSize - this.fieldSize/2;
+			let targetY = this.fleets[i].attack.y * this.fieldSize - this.fieldSize/2;
+
+			this.units.strokeStyle = this.fleets[i].friendly ? "green" : "red";
 
 			this.units.beginPath();
-			this.units.arc(this.fleets[i].x * this.fieldSize - this.fieldSize/2, this.fleets[i].y * this.fieldSize - this.fieldSize/2, 6, 0, 2*Math.PI, false);
+			this.units.moveTo(originX, originY)
+			this.units.lineTo(targetX, targetY);
+			this.units.closePath();
+			this.units.stroke();
+		}
+	},
+	drawUnits: function(){
+		for (let i = 0; i < this.fleets.length; i++){
+			if (this.fleets[i].loc.x == 0 || this.fleets[i].loc.y == 0){continue;}
+
+			let x = this.fleets[i].loc.x * this.fieldSize - this.fieldSize/2;
+			let y = this.fleets[i].loc.y * this.fieldSize - this.fieldSize/2;
+
+			this.units.beginPath();
+			this.units.fillStyle = this.fleets[i].friendly ? "green" : "red";
+			this.units.arc(x, y, 8, 0, 2*Math.PI, false);
 			this.units.closePath();
 			this.units.fill();
+
+			this.units.beginPath();
+			this.units.fillStyle = "black";
+			this.units.textStyle = ""
+			this.units.fillText(this.fleets[i].id, x, y + 5);
+			this.units.closePath();
+			this.units.fill();
+
+			this.units.fillStyle = "white";
+		}
+	},
+	resolveAllCombats: function(){
+		for (let i = 0; i < this.fleets.length; i++){
+			if (this.fleets[i].loc.x == 0 || this.fleets[i].loc.y == 0){continue;}
+			if (this.fleets[i].attack.x == 0){continue;}
+
+			var shooter = this.fleets[i];
+			var target = this.getAllUnitsByCoords(this.fleets[i].attack);
+
+			this.resolveSingleCombat(shooter, target[Math.floor(Math.random()*target.length)]);
+		}
+	},
+
+	resolveSingleCombat: function(shooter, target){
+		//console.log(shooter);
+		//console.log(target[Math.floor(Math.random()*target.length)]);
+
+		shooter.fireAt(target);
+		target.fireAt(shooter);
+	},
+
+
+
+	checkMouseHover: function(e){
+		for (let i = 0; i < this.fleets.length; i++){
+			if (this.fleets[i].loc.x != this.coords.x || this.fleets[i].loc.y != this.coords.y){
+				this.fleets[i].fleetHoverDiv.addClass("hidden"); continue;
+			}
+
+			console.log("fleet " + this.fleets[i].id);
+			if (this.fleets[i].fleetHoverDiv.is(":hidden")){
+				this.fleets[i].fleetHoverDiv.removeClass("hidden").css("top", e.clientY + 50).css("left", e.clientX - 30);
+			}
 		}
 	}
 }
 
 $(document).ready(function(){
 	$(document.body).append($("<input>").attr("type", "button").attr("value", "new fleet").click(addNewFleet))
+	$(document.body).append($("<input>").attr("type", "button").attr("value", "combat").click(resolveCombats))
 
 	game.width = Math.round($("#game").width());
 	game.height = Math.round($("#game").height());
@@ -328,18 +540,21 @@ $(document).ready(function(){
 		canva[i].style.height = game.height;
 	}
 
-	game.mouse = document.getElementById("mouse");
-	game.units = document.getElementById("units").getContext("2d");
-	game.units.fillStyle = "yellow";
-	game.grid = document.getElementById("grid").getContext("2d");
 
-/*	game.plane.beginPath();
-	game.plane.arc(game.width/2, game.height/2, 5, 0, 2*Math.PI, 0);
-	game.plane.closePath();
-	game.plane.fillStyle = "yellow";
-	game.plane.fill();
-*/
+	game.mouse = document.getElementById("mouse");
+
+	game.grid = document.getElementById("grid").getContext("2d");
+	game.grid.fillStyle = "white";
 	game.grid.strokeStyle = "white";
+	game.grid.font = "10px Arial";
+	game.grid.textAlign = "center";
+
+	game.units = document.getElementById("units").getContext("2d");
+	game.units.fillStyle = "white";
+	game.units.strokeStyle = "white";
+	game.units.font = "12px Arial";
+	game.units.textAlign = "center";
+
 
 	for (let i = 0; i <= game.width; i+= game.fieldSize){
 		game.grid.beginPath();
@@ -356,14 +571,6 @@ $(document).ready(function(){
 		game.grid.closePath();
 		game.grid.stroke();
 	}
-
-	game.grid.fillStyle = "yellow";
-/*	for (let i = 0; i <= game.width; i+= game.fieldSize){
-		game.plane.beginPath();
-		game.plane.fillText(i, i + game.fieldSize/3, game.height - game.fieldSize/3);
-		game.plane.closePath();
-	}
-*/	
 
 	let fields = [];
 
@@ -386,8 +593,6 @@ $(document).ready(function(){
 		}
 	}
 
-
-	game.grid.textAlign = "center";
 	for (let i = 0; i < fields.length; i++){
 		game.grid.fillText(fields[i].x + "-" + fields[i].y, (fields[i].x-1) * game.fieldSize + game.fieldSize/2, (fields[i].y-1) * game.fieldSize + game.fieldSize*.9);
 	}
@@ -395,25 +600,43 @@ $(document).ready(function(){
 	
 	$(game.mouse).click(function(e){
 		e.stopPropagation();
-		let pos = $(this).position()
-		let contPos = $(this).parent().position()
+		let mousePos = $(this).position();
+		let contPos = $(this).parent().position();
 		//console.log((e.originalEvent.clientX - pos.left) + ("/") + (e.originalEvent.clientY - pos.top));
 
-		let x = Math.ceil((e.originalEvent.clientX - pos.left - contPos.left) / game.fieldSize);
-		let y = Math.ceil((e.originalEvent.clientY - pos.top - contPos.top) / game.fieldSize);
+		let pos = {
+			x: Math.ceil((e.originalEvent.clientX - mousePos.left - contPos.left) / game.fieldSize),
+			y: Math.ceil((e.originalEvent.clientY - mousePos.top - contPos.top) / game.fieldSize)
+		}
 
-		console.log(x+"/"+y);
-
-
-		if (!game.activeFleet){return;}
-
-		game.activeFleet.doPlace(x, y);
+		if (game.activeFleet){
+			if (game.fieldIsEmpty(pos)) {
+				game.activeFleet.doPlace(pos);
+			}
+			else if (game.hasEnemyUnitOnField(pos)) {
+				game.activeFleet.setAttack(pos);
+			}
+		}
+		else {
+			let unitsOnField = game.getAllUnitsByCoords(pos);
+			let friendlies = [];
+			for (let i = 0; i < unitsOnField.length; i++){
+				if (unitsOnField[i].userid == game.userid){
+					friendlies.push(unitsOnField[i]);
+				}
+			}
+			if (friendlies.length){
+				friendlies[0].doSelect();
+			}
+		}
 	})
 
 	$(game.mouse).mousemove(function(e){
-		return;
-
 		e.stopPropagation();
+		game.mouseTicker++;
+		if (game.mouseTicker < 2){return;}
+		game.mouseTicker = 0;
+
 		let pos = $(this).position()
 		let contPos = $(this).parent().position()
 		//console.log((e.originalEvent.clientX - pos.left) + ("/") + (e.originalEvent.clientY - pos.top));
@@ -421,12 +644,19 @@ $(document).ready(function(){
 		let x = Math.ceil((e.originalEvent.clientX - pos.left - contPos.left) / game.fieldSize);
 		let y = Math.ceil((e.originalEvent.clientY - pos.top - contPos.top) / game.fieldSize);
 
-		console.log(x+"/"+y);
+		//console.log(x+"/"+y);
+		game.coords = {x: x, y: y};
+
+		game.checkMouseHover(e);
 	})
 })
 
 function addNewFleet(){
 	game.fleets.push(new classes.Fleet(game.getFleetId()));
+}
+
+function resolveCombats(){
+	game.resolveAllCombats();
 }
 
 function addUnitToFleet(element){
