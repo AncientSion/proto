@@ -87,6 +87,10 @@ tfoot {
 	margin-right: 2px;
 }
 
+.lost {
+	background-color: red;
+}
+
 #game {
 	position: absolute;
 	top: 10px;

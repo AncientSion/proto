@@ -20,6 +20,7 @@ const classes = {
 			this.element;
 
 			this.createSingleHTMLElement();
+			this.setHealth();
 		}
 
 		createSingleHTMLElement(){
@@ -41,12 +42,30 @@ const classes = {
 */
 			let healthCon = $("<div>").addClass("healthCon");
 
-			for (let i = 0; i < this.hp; i++){
+			for (let i = 1; i <= this.hp; i++){
 				healthCon.append($("<div>").addClass("health"));
 			}
-
 			this.element.append(healthCon);
+		}
 
+		setHealth(){
+			if (this.remHP == this.hp){return;}
+
+			let pips = this.element.find(".health");
+
+			for (let i = pips.length-1; i >= this.remHP; i--){
+				$(pips[i]).addClass("lost");
+			}
+		}
+
+		receiveDamage(amount){
+			this.damages.push({amount: amount, turn: game.turn});
+			this.remHP -= amount;
+
+			if (this.remHP <= 0){
+				this.remHP = 0;
+				this.destroyed = game.turn;
+			}
 		}
 	},
 
@@ -180,16 +199,9 @@ const classes = {
 		fireAt(target){
 
 			for (let i = 0; i < this.units.length; i++){
+				//	console.log("fleet #" + this.id + ", shooter: " + this.units[i].name + " #" + i + " doing " + this.units[i].soft + " damage"); 
 				let subTarget = target.units[Math.floor(Math.random()*target.units.length)];
-
-				subTarget.damages.push(this.units[i].soft);
-				subTarget.remHP -= this.units[i].soft
-
-				console.log("fleet #" + this.id + ", shooter: " + this.units[i].name + " #" + i + " doing " + this.units[i].soft + " damage"); 
-
-				if (subTarget.remHP <= 0){
-					subTarget.destroyed = 1;
-				}
+					subTarget.receiveDamage(this.units[i].soft);
 			}
 		}
 
@@ -335,14 +347,19 @@ const classes = {
 				stats[5] += amount[i] * game.samples[i].pd;
 				stats[6] += amount[i] * game.samples[i].soft;
 				stats[7] += amount[i] * game.samples[i].hard;
-				stats[9] =  Math.min(stats[9], game.samples[i].mobility)
-
+				stats[9] =  Math.min(stats[9], game.samples[i].mobility);
 			}
 
 			let tds = this.htmlElement.find("tr").last().children();
 
 			for (let i = 0; i < stats.length; i++){
 				$(tds[i]).html(stats[i]);
+			}
+		}
+
+		updateUnitElements(){
+			for (var i = 0; i < this.units.length; i++){
+				this.units[i].setHealth();
 			}
 		}
 	}
@@ -403,6 +420,7 @@ const game = {
 	mode: 1,
 	mouseTicker: 0,
 	userid: 1,
+	turn: 1,
 
 	getUnit: function(id){
 		for (let i = 0; i < this.fleets.length; i++){
@@ -506,8 +524,20 @@ const game = {
 
 		shooter.fireAt(target);
 		target.fireAt(shooter);
+
+		this.endTurn();
 	},
 
+	endTurn: function(){
+		this.turn++;
+		this.updateAllFleetTables();
+	},
+
+	updateAllFleetTables: function(){
+		for (let i = 0; i < this.fleets.length; i++){
+			this.fleets[i].updateUnitElements();
+		}
+	},
 
 
 	checkMouseHover: function(e){
