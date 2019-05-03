@@ -1,11 +1,12 @@
 const classes = {
 	Unit: class Unit {
-		constructor(name, cost, type, hp, pd, soft, hard, evade, mobility, range, parentid = 0, id = 0){
+		constructor(name, cost, armour, hp, pd, guns, soft, hard, evade, mobility, range, parentid = 0, id = 0){
 			this.name = name;
 			this.cost = cost;
-			this.type = type;
+			this.armour = armour;
 			this.hp = hp;
 			this.pd = pd;
+			this.guns = guns;
 			this.soft = soft;
 			this.hard = hard;
 			this.evade = evade;
@@ -16,6 +17,7 @@ const classes = {
 
 			this.destroyed = 0;
 			this.remHP = hp;
+			this.remGuns = guns;
 			this.damages = [];
 			this.element;
 
@@ -28,44 +30,74 @@ const classes = {
 			.addClass("unitContainer")
 				.data("unitid", this.id)
 				.click(function(){
-					console.log($(this).data("unitid"));
+					console.log(game.getUnit($(this).closest(".fleetDiv").data("fleetid")).getSubUnitById($(this).data("unitid")))
 				})
 				.contextmenu(function(e){
-					e.preventDefault();
-					game.getUnit($(this).closest(".fleetDiv").data("fleetid")).removeUnitById($(this).data("unitid"))
+					if (game.turn <= 1){
+						e.preventDefault();
+						game.getUnit($(this).closest(".fleetDiv").data("fleetid")).removeUnitById($(this).data("unitid"))
+					}
 				})
-				.append($("<div>").addClass("unittype").html(this.name + " " + this.id))
+				.append($("<div>").addClass("unitType").html(this.name + " " + this.id))
 		/*	.append($("<div>")
 				.append($("<div>").html(this.soft))
 				.append($("<div>").html(this.hard))
 			)
-*/
+		*/
 			let healthCon = $("<div>").addClass("healthCon");
 
 			for (let i = 1; i <= this.hp; i++){
 				healthCon.append($("<div>").addClass("health"));
 			}
+			for (let i = 1; i <= this.armour; i++){
+				healthCon.append($("<div>").addClass("armour"));
+			}
 			this.element.append(healthCon);
 		}
 
 		setHealth(){
-			if (this.remHP == this.hp){return;}
-
-			let pips = this.element.find(".health");
+			let pips = this.element.find(".health").removeClass("lost");
 
 			for (let i = pips.length-1; i >= this.remHP; i--){
 				$(pips[i]).addClass("lost");
 			}
+
+			if (this.destroyed){
+				this.element.find(".unitType").addClass("destroyed")
+			} else this.element.find(".unitType").removeClass("destroyed")
 		}
 
-		receiveDamage(amount){
-			this.damages.push({amount: amount, turn: game.turn});
-			this.remHP -= amount;
+		receiveDamageFromShooter(shooter){
 
-			if (this.remHP <= 0){
-				this.remHP = 0;
-				this.destroyed = game.turn;
+			//console.log("ding");
+
+			let amount = Math.max(1, shooter.soft - this.armour);
+			let i;
+			let fired = 0;
+
+			for (i = shooter.remGuns; i >= 1; i--){
+				fired++
+				this.remHP -= amount;
+				if (this.remHP <= 0){
+					this.remHP = 0;
+					this.destroyed = game.turn;
+					break;
+				}
 			}
+			
+			shooter.remGuns -= fired;
+			this.damages.push({dmg: shooter.soft, guns: fired, turn: game.turn, armour: this.armour});
+
+			let html = shooter.name + " #" + shooter.id + " doing " + fired + "x" + shooter.soft + " = <span class='damage'>" + fired*amount + "</span> to ";
+				html += this.name + " #" + this.id + (this.destroyed ? " - <span class='damage'>KILLED " : "")
+
+		/*	if (shooter.remGuns){
+				html += "</br>remaining guns: " + shooter.remGuns;
+			}
+		*/	game.log($("<tr>").append($("<td>").html(html)))
+
+			this.setHealth();
+
 		}
 	},
 
@@ -81,6 +113,7 @@ const classes = {
 			this.idindex = 0;
 			this.loc = {x: 0, y: 0};
 			this.attack = {x: 0, y: 0};
+			this.destroyed = 0;
 
 			this.createElement();
 			this.createHoverElement();
@@ -90,11 +123,13 @@ const classes = {
 			if (!this.units.length){return;}
 			
 			if (!game.activeFleet || game.activeFleet.id != this.id){
+				//console.log("select!")
 				game.activeFleet = this;
 				game.mode = 2;
 				this.htmlElement.find(".btn").html("active!").addClass("activeFleet");
 			}
 			else {
+				//console.log("unselect!")
 				game.mode = 1;
 				game.activeFleet = false;
 				this.htmlElement.find(".btn").html("select").removeClass("activeFleet");
@@ -104,7 +139,7 @@ const classes = {
 		changeUserId(){
 			this.userid = this.userid == 1 ? this.userid = 2 : this.userid = 1;
 			this.friendly = this.userid == game.userid ? 1 : 0;
-			this.htmlElement.find(".userid").html(this.userid);
+			this.htmlElement.find("tr").first().removeClass().addClass(this.friendly ? "friendly" : "hostile");
 		}
 
 		doPlace(pos){
@@ -164,11 +199,13 @@ const classes = {
 				.append($("<tr>")
 					.append($("<td>").html("HP"))
 					.append($("<td>").html("PD"))
+				//	.append($("<td>").html("Guns"))
 					.append($("<td>").html("SA"))
 					.append($("<td>").html("HA")))
 				.append($("<tr>")
 					.append($("<td>").html(this.getStat("hp")))
 					.append($("<td>").html(this.getStat("pd")))
+				//	.append($("<td>").html(this.getStat("guns")))
 					.append($("<td>").html(this.getStat("soft")))
 					.append($("<td>").html(this.getStat("hard"))))
 
@@ -176,7 +213,7 @@ const classes = {
 
 		getCombinedStats(){
 			let hp = this.getStat("hp");
-			let pd = this.getStat("pd");			
+			let pd = this.getStat("pd");
 			let soft = this.getStat("soft");
 			let hard = this.getStat("hard");
 
@@ -197,12 +234,59 @@ const classes = {
 		}
 
 		fireAt(target){
+			if (this.isDestroyed()){return false;}
+
+			game.log(($("<tr>").append($("<th>").html("Fleet #" + this.id + " firing at Fleet #" + target.id))));
 
 			for (let i = 0; i < this.units.length; i++){
-				//	console.log("fleet #" + this.id + ", shooter: " + this.units[i].name + " #" + i + " doing " + this.units[i].soft + " damage"); 
-				let subTarget = target.units[Math.floor(Math.random()*target.units.length)];
-					subTarget.receiveDamage(this.units[i].soft);
+				if (this.units[i].destroyed && this.units[i].destroyed < game.turn){continue;}
+				while (this.units[i].remGuns){
+					if (!target.hasActiveSubunits()){break;}
+					//	console.log("fleet #" + this.id + ", shooter: " + this.units[i].name + " #" + i + " doing " + this.units[i].soft + " damage");
+					target.getSubTarget().receiveDamageFromShooter(this.units[i]);
+				}
 			}
+		}
+
+		isDestroyed(){
+			if (this.destroyed){return true;}
+
+			for (let i = 0; i < this.units.length; i++){
+				if (!this.units[i].destroyed || this.units[i].destroyed <= game.turn){
+					return false;
+				}
+			}
+			this.destroyed = 1;
+			this.htmlElement.find("thead td").first().html("destroyed!");
+			return true;
+		}
+
+		getSubUnitById(id){
+			for (let i = 0; i < this.units.length; i++){
+				if (this.units[i].id == id){
+					return this.units[i];
+				}
+			}
+		}
+
+		createElement(){
+		}
+
+		getSubTarget(){
+			let avail = [];
+			for (let i = 0; i < this.units.length; i++){
+				if (this.units[i].destroyed){continue;}
+				//	console.log("fleet #" + this.id + ", shooter: " + this.units[i].name + " #" + i + " doing " + this.units[i].soft + " damage");
+				avail.push(this.units[i]);
+			}
+			return avail[Math.floor(Math.random()*avail.length)];
+		}
+
+		hasActiveSubunits(){
+			for (let i = 0; i < this.units.length; i++){
+				if (!this.units[i].destroyed){return true;}
+			}
+			return false;
 		}
 
 		createElement(){
@@ -212,10 +296,11 @@ const classes = {
 			let classTable = $("<table>")
 			let thead = $("<thead>")
 			.append($("<tr>")
-				.append($("<td>").attr("colSpan", 7).html("Fleet #" + this.id))
+				.addClass(this.friendly ? "friendly" : "hostile")
+				.append($("<td>").attr("colSpan", 8).html("Fleet #" + this.id))
 				.append($("<td>").attr("colSpan", 2)
-					.html(this.userid)
-					.addClass("userid")
+		//			.html(this.userid)
+		//			.addClass("userid")
 					.click(function(){
 						game.getUnit($(this).closest(".fleetDiv").data("fleetid")).changeUserId();
 					}))
@@ -229,7 +314,7 @@ const classes = {
 
 
 
-			let names = ["", "Name", "Cost", "Type", "Health", "PD", "Soft", "Hard", "Evade", "Mobility", "Range"];
+			let names = ["", "Name", "Cost", "Armour", "Health", "PD", "Guns", "Soft", "Hard", "Evade", "Mobility", "Range"];
 			let cols = [];
 
 			for (let i = 0; i < names.length; i++){
@@ -247,7 +332,7 @@ const classes = {
 				let tr = $("<tr>")
 					.addClass("availableUnit")
 					.click(function(e){
-						addUnitToFleet(this)
+						addUnitsToFleet(this)
 					})
 					.contextmenu(function(e){
 						e.preventDefault();
@@ -256,9 +341,10 @@ const classes = {
 					.append($("<td>").html(""))
 					.append($("<td>").html(game.samples[i].name))
 					.append($("<td>").html(game.samples[i].cost))
-					.append($("<td>").html(game.samples[i].type))
+					.append($("<td>").html(game.samples[i].armour))
 					.append($("<td>").html(game.samples[i].hp))
 					.append($("<td>").html(game.samples[i].pd))
+					.append($("<td>").html(game.samples[i].guns))
 					.append($("<td>").html(game.samples[i].soft))
 					.append($("<td>").html(game.samples[i].hard))
 					.append($("<td>").html(game.samples[i].evade))
@@ -278,6 +364,7 @@ const classes = {
 						.append($("<td>").html(""))
 						.append($("<td>").html(0))
 						.append($("<td>").html(0))
+						.append($("<td>").html(""))
 						.append($("<td>").html(0))
 						.append($("<td>").html(0))
 						.append($("<td>").html(""))
@@ -293,11 +380,17 @@ const classes = {
 			$(document.body).append(this.htmlElement);
 		}
 
-		addUnit(name){
+		addUnits(name, amount = 1){
 			var subunit = new classes[name](this.id, this.getUnitId());
 
 			this.units.push(subunit);
-			this.htmlElement.find(".fleetLayout").append(subunit.element);
+			this.htmlElement.find(".fleetLayout").append(subunit.element);			
+
+			if (amount > 1){
+				amount--;
+				this.addUnits(name, amount);
+				return;
+			}
 
 			this.updateTable(name);
 			if (this.loc.x || this.loc.y){this.updateHoverDiv();}
@@ -328,7 +421,7 @@ const classes = {
 
 		updateTable(name){
 			let amount = [];
-			let stats = [0, "", 0, "", 0, 0, 0, 0, "", 10, ""];
+			let stats = [0, "", 0, "", 0, 0, "", 0, 0, "", 10, ""];
 			let rows = $(this.htmlElement).find("tr");
 
 			for (var i = 0; i < game.samples.length; i++){
@@ -345,9 +438,9 @@ const classes = {
 				stats[2] += amount[i] * game.samples[i].cost;
 				stats[4] += amount[i] * game.samples[i].hp;
 				stats[5] += amount[i] * game.samples[i].pd;
-				stats[6] += amount[i] * game.samples[i].soft;
-				stats[7] += amount[i] * game.samples[i].hard;
-				stats[9] =  Math.min(stats[9], game.samples[i].mobility);
+				stats[7] += amount[i] * game.samples[i].soft;
+				stats[8] += amount[i] * game.samples[i].hard;
+				stats[10] =  Math.min(stats[9], game.samples[i].mobility);
 			}
 
 			let tds = this.htmlElement.find("tr").last().children();
@@ -362,48 +455,66 @@ const classes = {
 				this.units[i].setHealth();
 			}
 		}
+
+		resetGuns(){
+			for (var i = 0; i < this.units.length; i++){
+				this.units[i].remGuns = this.units[i].guns;
+			}
+		}
+
+		reset(){
+			for (var i = 0; i < this.units.length; i++){
+				this.units[i].destroyed = 0;
+				this.units[i].remHP = this.units[i].hp;
+				this.units[i].damages = [];
+			}
+			this.updateUnitElements();
+			this.resetGuns();
+		}
 	}
 }
 
+//name, cost, type, hp, pd, guns, soft, hard, evade, mobility, range, parentid = 0, id = 0){
+
 classes.FighterWing = class FighterWing extends classes.Unit {
 	constructor(parentid, id){
-		super("FighterWing", 30, "PD", 3, 2, 2, 0, 15, 5, 1, parentid, id);
+		super("FighterWing", 40, 0, 8, 0, 3, 1, 0, 15, 5, 1, parentid, id);
 	}
 }
 
 classes.BomberWing = class BomberWing extends classes.Unit {
 	constructor(parentid, id){
-		super("BomberWing", 75, "PD", 4, 1, 2, 4, 15, 3, 1, parentid, id);
+		super("BomberWing", 60, 0, 9, 0, 1, 10, 0, 15, 3, 1, parentid, id);
 	}
 }
 
 classes.Corvette = class Corvette extends classes.Unit {
 	constructor(parentid, id){
-		super("Corvette", 35, "Soft", 4, 1, 2, 3, 15, 4, 2, parentid, id);
+		super("Corvette", 35, 1, 7, 0, 1, 5, 0, 15, 4, 2, parentid, id);
 	}
 }
 
 classes.Frigate = class Frigate extends classes.Unit {
 	constructor(parentid, id){
-		super("Frigate", 50, "Soft", 6, 2, 2, 2, 15, 4, 2, parentid, id);
+		super("Frigate", 50, 1, 10, 0, 3, 2, 0, 15, 4, 2, parentid, id);
 	}
 }
 
 classes.Destroyer = class Destroyer extends classes.Unit {
 	constructor(parentid, id){
-		super("Destroyer", 100, "Hard", 12, 3, 6, 4, 10, 3, 3, parentid, id);
+		super("Destroyer", 100, 2, 16, 0, 3, 3, 0, 10, 3, 3, parentid, id);
 	}
 }
 
 classes.Cruiser = class Cruiser extends classes.Unit {
 	constructor(parentid, id){
-		super("Cruiser", 200, "Hard", 30, 6, 8, 5, 5, 2, 3, parentid, id);
+		super("Cruiser", 200, 2, 44, 0, 4, 3, 0, 36, 2, 3, parentid, id);
 	}
 }
 
 classes.Battleship = class Battleship extends classes.Unit {
 	constructor(parentid, id){
-		super("Battleship", 500, "Hard", 54, 12, 12, 18, 0, 1, 4, parentid, id);
+		super("Battleship", 350, 3, 56, 0, 6, 4, 0, 52, 1, 4, parentid, id);
 	}
 }
 
@@ -422,6 +533,19 @@ const game = {
 	userid: 1,
 	turn: 1,
 
+	reset: function(){
+		this.turn = 1;
+		for (var i = 0; i < this.fleets.length; i++){
+			this.fleets[i].reset();
+		}
+
+		this.emptyLog();
+	},
+	emptyLog: function(){		
+		 $("#log tr").each(function(i){
+		 	$(this).remove();
+		 });
+	},
 	getUnit: function(id){
 		for (let i = 0; i < this.fleets.length; i++){
 			if (this.fleets[i].id == id){return this.fleets[i];}
@@ -522,23 +646,28 @@ const game = {
 		//console.log(shooter);
 		//console.log(target[Math.floor(Math.random()*target.length)]);
 
+		this.emptyLog();
 		shooter.fireAt(target);
 		target.fireAt(shooter);
-
 		this.endTurn();
+	},
+
+	log(data){
+		$("#log").append(data);
 	},
 
 	endTurn: function(){
 		this.turn++;
-		this.updateAllFleetTables();
+		$(".turn").html(this.turn);
+		this.initNewTurn();
 	},
 
-	updateAllFleetTables: function(){
+	initNewTurn: function(){
 		for (let i = 0; i < this.fleets.length; i++){
 			this.fleets[i].updateUnitElements();
+			this.fleets[i].resetGuns();
 		}
 	},
-
 
 	checkMouseHover: function(e){
 		for (let i = 0; i < this.fleets.length; i++){
@@ -546,7 +675,7 @@ const game = {
 				this.fleets[i].fleetHoverDiv.addClass("hidden"); continue;
 			}
 
-			console.log("fleet " + this.fleets[i].id);
+			//console.log("fleet " + this.fleets[i].id);
 			if (this.fleets[i].fleetHoverDiv.is(":hidden")){
 				this.fleets[i].fleetHoverDiv.removeClass("hidden").css("top", e.clientY + 50).css("left", e.clientX - 30);
 			}
@@ -557,6 +686,13 @@ const game = {
 $(document).ready(function(){
 	$(document.body).append($("<input>").attr("type", "button").attr("value", "new fleet").click(addNewFleet))
 	$(document.body).append($("<input>").attr("type", "button").attr("value", "combat").click(resolveCombats))
+	$(document.body).append($("<input>").attr("type", "button").attr("value", "reset").click(reset))
+	$(document.body).append($("<div>").addClass("turn").html(game.turn))
+	$(document.body).append($("<div>")
+		.addClass("logWrapper")
+		.css("left", $("#game").position().left)
+		.css("top", $("#game").position().top + $("#game").height() + 20)
+		.append($("<table>").attr("id", "log").append($("<thead>").append($("<td>").html("Combat Log")))))
 
 	game.width = Math.round($("#game").width());
 	game.height = Math.round($("#game").height());
@@ -679,6 +815,26 @@ $(document).ready(function(){
 
 		game.checkMouseHover(e);
 	})
+
+
+	addNewFleet();
+	let fleetA = game.getUnit(1)
+		fleetA.addUnits("Corvette", 11);
+		fleetA.doSelect();
+		fleetA.doPlace({x: 1, y: 1})
+	addNewFleet();
+	let fleetB = game.getUnit(2)
+		fleetB.changeUserId();
+		fleetB.addUnits("Frigate", 8);
+		fleetB.doSelect();
+		fleetB.doPlace({x: 3, y: 3})
+
+	fleetA.doSelect();
+	fleetA.setAttack({x: 3, y: 3});
+
+	game.resolveAllCombats();
+
+
 })
 
 function addNewFleet(){
@@ -689,11 +845,15 @@ function resolveCombats(){
 	game.resolveAllCombats();
 }
 
-function addUnitToFleet(element){
+function reset(){
+	game.reset();
+}
+
+function addUnitsToFleet(element){
 	let name = $(element).children().eq(1).html();
 	let fleetid = $(element).closest(".fleetDiv").data("fleetid");
 	let fleet = game.getUnit(fleetid);
-		fleet.addUnit(name)
+		fleet.addUnits(name)
 }
 
 function removeUnitFromFleet(element){
@@ -704,6 +864,6 @@ function removeUnitFromFleet(element){
 }
 
 function selectFleet(fleetid){
-	console.log(fleetid);
+	//console.log(fleetid);
 	game.getUnit(fleetid).doSelect();
 }

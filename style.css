@@ -45,6 +45,10 @@ tfoot {
 	width: 650px;
 }
 
+th {
+	padding-top: 10px;
+}
+
 .fleetDiv tr:first-child td {
 	width: 50px;
 }
@@ -60,16 +64,16 @@ tfoot {
 .fleetLayout {
 	display: inline-block;
 	margin: auto;
-	border: 1px solid red;
+	border: 1px solid black;
 }
 
-.unittype {
+.unitType {
 	margin: auto;
 }
 
 .unitContainer {
-	width: 80px;
-	border: 1px solid blue;
+	width: 90px;
+	border: 1px solid white;
 	display: inline-grid;
 	padding: 3px;
 	margin: 6px;
@@ -79,12 +83,24 @@ tfoot {
 	display: inline-block;
 }
 
+.healthCon {
+	width: 84px;
+	margin: auto;
+}
+
+.healthCon div {
+	width: 4px;
+	height: 6px;
+	margin-right: 3px;
+
+}
+
 .health {
-	width: 6px;
-	height: 7px;
 	background-color: green;
-	margin-left: 2px;
-	margin-right: 2px;
+}
+
+.armour {
+	background-color: yellow;
 }
 
 .lost {
@@ -151,4 +167,26 @@ tfoot {
 
 .hidden {
 	display: none;
+}
+
+.logWrapper {
+	position: absolute;
+	width: 400px;
+
+}
+
+.logWrapper table {
+	width: 100%;
+}
+
+thead tr.friendly td {
+	color: lightGreen;
+}
+
+thead tr.hostile td, .destroyed {
+	color: red;
+}
+
+.damage {
+	color: yellow;
 }

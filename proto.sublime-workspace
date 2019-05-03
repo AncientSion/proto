@@ -4,12 +4,16 @@
 		"selected_items":
 		[
 			[
-				"back",
-				"background-color\tproperty"
+				"rev",
+				"removeClass"
 			],
 			[
-				"update",
-				"updateSelfElement"
+				"emp",
+				"emptyLog"
+			],
+			[
+				"getSub",
+				"getSubUnit"
 			],
 			[
 				"length",
@@ -34,6 +38,10 @@
 			[
 				"field",
 				"fieldIsEmpty"
+			],
+			[
+				"update",
+				"updateHoverDiv"
 			],
 			[
 				"acti",
@@ -332,6 +340,10 @@
 				"shipsBought"
 			],
 			[
+				"back",
+				"background-color"
+			],
+			[
 				"roa",
 				"rotate270"
 			],
@@ -502,18 +514,6 @@
 			[
 				"getPla",
 				"getPlannedPos"
-			],
-			[
-				"setPr",
-				"setPreMoveCC"
-			],
-			[
-				"set",
-				"setPostFireImage"
-			],
-			[
-				"integr",
-				"integrityAmount"
 			]
 		]
 	},
@@ -540,7 +540,7 @@
 			"file": "script.js",
 			"settings":
 			{
-				"buffer_size": 18898,
+				"buffer_size": 23341,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -549,7 +549,7 @@
 			"file": "style.css",
 			"settings":
 			{
-				"buffer_size": 1696,
+				"buffer_size": 2030,
 				"encoding": "UTF-8",
 				"line_ending": "Windows"
 			}
@@ -889,9 +889,86 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"updateTa",
-			"updateTable",
+			"Battleship",
+			"addf",
+			"addfl",
+			"addflee",
+			"Battleship",
+			"cruiser",
+			"battleship",
+			"BomberWing",
+			"destroyer",
+			"reset",
+			"destroyer",
+			"destr",
+			"destroyer",
+			"receiveDamageFromShooter",
+			"th",
+			"\"kill",
+			"receiveda",
+			"red",
+			"\"red",
+			"blue",
+			"unittype",
+			"removeUnitFromFleet",
+			"removeunit",
+			"updatetable",
+			"hasActiveSubunits",
+			"remguns ",
+			"remGuns =",
+			"updateUnitElements",
+			"remGuns",
+			"updateUnitElements",
+			"updateAllFleetTables",
+			"updateAllFleetTables#",
+			"endturn",
+			"guns = g",
+			"receivedam",
+			"fireat",
+			"\"des",
+			"Sel",
+			"addUnits",
+			"addUnit",
+			"setattack",
+			"doplace",
+			"addnewf",
+			".ready",
+			"endturn",
+			"emptyl",
+			"reset",
+			"reset ",
+			"reset",
+			"empty",
+			"arm",
+			".log($",
+			"getsub",
+			"getSubUnitById",
+			"getsubtar",
+			"isDestroyed",
+			"fireat",
+			"health",
+			"type",
+			"\"armour",
+			"\"type",
+			"fighterwing",
+			"reset ",
+			"reset",
+			"\"soft\"",
+			"this.friendly ? ",
+			"userid",
+			"\"fleet #",
+			"fleet\"",
+			"eq",
+			"this.log",
+			".ready",
+			".log",
 			"fireAt",
+			"receiveDamage",
+			"destroyed = ",
+			"resolveallcomb",
+			"resolvecombat",
+			"combat",
+			".ui",
 			"destroyed",
 			"target",
 			".x",
@@ -939,84 +1016,7 @@
 			"fleet ",
 			"fleet",
 			"planeH",
-			".canvas",
-			"plane",
-			"onerror",
-			"show",
-			"card",
-			"mainC",
-			"onload",
-			"img = ",
-			"img = docu",
-			"img = ",
-			"var img",
-			"var",
-			"showImage",
-			"showText",
-			"toggleU",
-			"<script>var window",
-			"rarityA",
-			"toggleU",
-			"toggleVis",
-			"574",
-			"depth",
-			"days",
-			"fays",
-			"con",
-			"getBoxPrices",
-			"getBoxPrices#",
-			"getBoxPrices",
-			"box",
-			"input",
-			"$foil",
-			"days",
-			"\"foil\"",
-			"il\"",
-			"foil",
-			"rarities t",
-			"checkcont",
-			"abs",
-			"go to ",
-			"check",
-			"checkw",
-			"hide",
-			"nonFoil",
-			"01.01.2",
-			"write",
-			"wirtean",
-			"getmem",
-			"getMemory ",
-			"debug",
-			"me",
-			"debug",
-			"buildta",
-			"recent stoc",
-			"recent st",
-			"request",
-			"$(this).find(\"tbody\").find(\"tr\").each(function(){",
-			"#card",
-			"deckbox",
-			"function click(event) {",
-			"hide",
-			"this.el.app",
-			"showim",
-			"deckbox_i_tooltip",
-			"deckbox_i_tooltip ",
-			"deckbox_i_tooltip image",
-			"showImage",
-			"'",
-			"foilPriceChart ",
-			"foilPriceChart",
-			"checkWrapper",
-			"id=\"rarity\"",
-			"toggle",
-			"#rarity",
-			"checkWrapper",
-			"preset",
-			"\"",
-			"abs",
-			"ABS",
-			"locName"
+			".canvas"
 		],
 		"highlight": true,
 		"in_selection": false,
@@ -1024,6 +1024,8 @@
 		"regex": false,
 		"replace_history":
 		[
+			"addUnits",
+			"receiveDamageShooter",
 			"pos",
 			"userhasUnitOnField",
 			"height",
@@ -1149,9 +1151,7 @@
 			"checkPrimaryDestroyedState",
 			"$this->checkDestroyedState();",
 			"updateUnitStats",
-			"325",
-			"this.fireMode == \"Pulse\"",
-			"this.fireMode == \"Laser\""
+			"325"
 		],
 		"reverse": false,
 		"show_context": true,
@@ -1178,8 +1178,8 @@
 						"selection":
 						[
 							[
-								317,
-								317
+								182,
+								182
 							]
 						],
 						"settings":
@@ -1228,83 +1228,24 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 18898,
+						"buffer_size": 23341,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1410,
-								1410
+								22348,
+								22348
 							]
 						],
 						"settings":
 						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content"
-							],
 							"syntax": "Packages/JavaScript/JavaScript.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 413.0,
+						"translation.y": 12888.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -1316,83 +1257,24 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1696,
+						"buffer_size": 2030,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								911,
-								911
+								905,
+								905
 							]
 						],
 						"settings":
 						{
-							"BracketHighlighterBusy": false,
-							"bh_regions":
-							[
-								"bh_regex",
-								"bh_regex_center",
-								"bh_regex_open",
-								"bh_regex_close",
-								"bh_regex_content",
-								"bh_angle",
-								"bh_angle_center",
-								"bh_angle_open",
-								"bh_angle_close",
-								"bh_angle_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
-								"bh_c_define",
-								"bh_c_define_center",
-								"bh_c_define_open",
-								"bh_c_define_close",
-								"bh_c_define_content",
-								"bh_tag",
-								"bh_tag_center",
-								"bh_tag_open",
-								"bh_tag_close",
-								"bh_tag_content",
-								"bh_default",
-								"bh_default_center",
-								"bh_default_open",
-								"bh_default_close",
-								"bh_default_content",
-								"bh_double_quote",
-								"bh_double_quote_center",
-								"bh_double_quote_open",
-								"bh_double_quote_close",
-								"bh_double_quote_content",
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
-								"bh_unmatched",
-								"bh_unmatched_center",
-								"bh_unmatched_open",
-								"bh_unmatched_close",
-								"bh_unmatched_content"
-							],
 							"syntax": "Packages/CSS/CSS.sublime-syntax",
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 1022.0,
+						"translation.y": 1065.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -1403,7 +1285,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 28.0
+		"height": 25.0
 	},
 	"input":
 	{
@@ -1440,7 +1322,7 @@
 	"project": "proto.sublime-project",
 	"replace":
 	{
-		"height": 72.0
+		"height": 46.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -1451,11 +1333,23 @@
 		[
 			[
 				"scr",
-				"C:\\xampp\\htdocs\\proto\\proto\\script.js"
+				"C:\\xampp\\htdocs\\proto\\script.js"
 			],
 			[
 				"sty",
-				"C:\\xampp\\htdocs\\proto\\proto\\style.css"
+				"C:\\xampp\\htdocs\\proto\\style.css"
+			],
+			[
+				"st",
+				"C:\\xampp\\htdocs\\proto\\style.css"
+			],
+			[
+				"sc",
+				"C:\\xampp\\htdocs\\proto\\script.js"
+			],
+			[
+				"index",
+				"C:\\xampp\\htdocs\\proto\\index.php"
 			],
 			[
 				"ind",
@@ -1508,10 +1402,6 @@
 			[
 				"av",
 				"C:\\xampp\\htdocs\\crawl\\output\\avail.json"
-			],
-			[
-				"st",
-				"C:\\xampp\\htdocs\\crawl\\style\\style.css"
 			],
 			[
 				"edh",
@@ -1952,14 +1842,6 @@
 			[
 				"cen",
 				"C:\\xampp\\htdocs\\fire\\server\\ships\\centurion.php"
-			],
-			[
-				"shok",
-				"C:\\xampp\\htdocs\\fire\\server\\ships\\shokov.php"
-			],
-			[
-				"lau",
-				"C:\\xampp\\htdocs\\fire\\server\\systems\\weapons\\launcher.php"
 			]
 		],
 		"width": 0.0
@@ -1994,7 +1876,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 221.0,
+	"side_bar_width": 142.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
